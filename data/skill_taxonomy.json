@@ -1,0 +1,6 @@
+{
+  "backend": ["python", "java", "nodejs", "sql", "system design"],
+  "devops": ["docker", "kubernetes", "ci/cd", "aws", "gcp", "azure"],
+  "data_ml": ["pandas", "numpy", "machine learning", "tensorflow", "pytorch"],
+  "frontend": ["javascript", "typescript", "react"]
+}
