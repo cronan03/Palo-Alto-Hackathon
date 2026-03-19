@@ -13,7 +13,8 @@ st.markdown(
     <style>
     /* App-wide background tweak on top of Streamlit theme */
     .stApp {
-        background: radial-gradient(circle at top, #1f2937 0, #050816 45%, #020617 100%);
+        /* Slightly more purple, still dark and subtle */
+        background: radial-gradient(circle at top, #4b2e83 0, #1f2937 40%, #05001a 100%);
     }
 
     /* Main title */

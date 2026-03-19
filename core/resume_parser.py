@@ -57,13 +57,34 @@ def extract_projects(text: str) -> list[str]:
             cleaned = line.strip(" -\t")
             if cleaned:
                 project_lines.append(cleaned)
-    return project_lines[:8]
+    # Keep a reasonable cap so the dashboard remains readable,
+    # but allow more projects to surface than before.
+    return project_lines[:20]
 
 
 def extract_experience(text: str) -> dict:
     years_matches = re.findall(r"(\d+)\+?\s+years", text.lower())
     years = max([int(y) for y in years_matches], default=0)
+    experience_lines = []
+    leadership_lines = []
+
+    leadership_prefixes = ("Spearheaded", "Instructed", "Directed")
+
+    for raw in text.splitlines():
+        line = raw.strip(" -\t•")
+        lowered = line.lower()
+        if not line:
+            continue
+
+        if any(tok in lowered for tok in ["intern", "engineer", "developer", "experience", "analyst", "research", "manager", "architect"]):
+            experience_lines.append(line)
+
+        if line.startswith(leadership_prefixes):
+            leadership_lines.append(line)
+
     return {
         "years": years,
         "has_internship": "intern" in text.lower(),
+        "highlights": experience_lines[:20],
+        "leadership": leadership_lines[:20],
     }

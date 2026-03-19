@@ -1,70 +1,92 @@
-# Skill-Bridge Career Navigator (MVP In Progress)
+# Skill-Bridge Career Navigator
 
-## What is implemented now
-- Streamlit multi-page app shell
-- Home onboarding with resume upload and GitHub username
-- Resume parsing baseline (skills, projects, experience)
-- GitHub parsing baseline (repos, inferred skills, score)
-- Unified weighted score (0.6 GitHub + 0.4 Resume)
-- Dashboard with score cards and skill chart
-- Job Match with missing skills, gap clusters, recommendations, and knowledge graph
-- Leaderboard by college with filters and histogram
-- Resume Griller basic interview flow with per-answer feedback and final summary
-- SQLite persistence for:
-  - Users
-  - Job match runs
-  - Interview runs
+AI-powered career intelligence for students and early-career professionals. Upload a resume, connect GitHub, and receive a unified snapshot of demonstrated skills, job-fit guidance, and targeted interview practice.
 
-## Project structure
-- app/main.py
-- app/pages/1_Home.py
-- app/pages/2_Dashboard.py
-- app/pages/3_Job_Match.py
-- app/pages/4_Leaderboard.py
-- app/pages/5_Resume_Griller.py
-- core/
-- utils/
-- storage/
-- data/
-- tests/
+---
 
-## Setup
-1. Create virtual environment
-2. Install dependencies
-3. Configure Gemini API key
-4. Run Streamlit app
+## Feature Snapshot
 
-### Commands (PowerShell)
+- **Guided Onboarding** (Home page): resume upload + GitHub username produces a unified skill profile with normalized scores (every metric is scaled into the 70–100 band for easy comparison).
+- **Insights Dashboard**: top skills bar chart, AI-generated pros/cons, and structured resume highlights (projects, experience, leadership) directly extracted from the PDF.
+- **Job Match & Gap Analysis**: hybrid heuristic + Gemini flow that extracts JD skills, computes a normalized match score, clusters gaps, and renders a knowledge graph.
+- **Resume Griller**: contextual interview practice with Gemini-based question generation & answer evaluation plus deterministic fallbacks.
+- **College Leaderboard**: cohort benchmarking with filters, score histogram, and persistence for trend tracking.
+- **Persistence Layer**: SQLite-backed storage of user profiles, job match runs, and interview runs for quick iteration.
+
+> **Score normalization**: Resume, GitHub, and Job Match scores are internally computed on 0–100, then linearly rescaled to 70–100 so reviewers always see “at a glance” readiness levels on a consistent scale.
+
+---
+
+## Repository Layout
+
+```
+app/
+  main.py              # Streamlit entry point (forwards to Home page)
+  pages/
+   1_Home.py          # Resume/GitHub onboarding
+   2_Dashboard.py     # Scores, AI insights, resume highlights
+   3_Job_Match.py     # Job-fit analysis + knowledge graph
+   4_Leaderboard.py   # College leaderboard & histogram
+   5_Resume_Griller.py# Interview simulation
+core/                  # Resume/GitHub parsers, scoring engines, gap analysis
+utils/                 # Prompts, normalizers, graph rendering helpers
+storage/               # SQLite helpers
+data/                  # Taxonomies / seed data
+tests/                 # (placeholder) engine-level tests
+```
+
+---
+
+## Local Setup
+
+1. **Create & activate a virtual environment**
+
 ```powershell
 cd hack
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+```
+
+2. **Install dependencies**
+
+```powershell
 pip install -r requirements.txt
+```
+
+3. **Configure Gemini** (see below)
+4. **Launch the app**
+
+```powershell
 streamlit run app/main.py
 ```
 
-## LLM configuration (Gemini)
-1. Copy .env.example to .env
-2. Set GEMINI_API_KEY in .env
-3. Optionally change GEMINI_MODEL (default is gemini-1.5-flash)
+When the Streamlit server starts it will open the **Home** page automatically. Complete onboarding once; subsequent pages pull data from `st.session_state`.
 
-Example .env:
+---
+
+## Gemini / LLM Configuration
+
+Create `.env` (or edit the existing one) in the repo root:
+
 ```env
 GEMINI_API_KEY=your_real_key
-GEMINI_MODEL=gemini-1.5-flash
+GEMINI_MODEL=gemini-3-flash-preview  # or gemini-1.5-flash
 ```
 
 Behavior:
-- If GEMINI_API_KEY is present, Job Match skill extraction and Resume Griller Q/A evaluation use Gemini.
-- If key is missing or API response is invalid, the app automatically falls back to local heuristic logic.
 
-## Next implementation steps
-1. Replace heuristic JD skill extraction with LLM + embedding matcher
-2. Add GitHub README/content analysis for stronger inferred skill confidence
-3. Add interview history and job-match history pages
-4. Add authentication and per-user profiles
-5. Add unit tests for core engines (resume, github, gap, interview)
+- If `GEMINI_API_KEY` is set, Job Match skill extraction, Dashboard AI insights, and Resume Griller use Gemini responses (with raw-response logging in the terminal for debugging).
+- If the key is missing or the API fails, each feature automatically falls back to deterministic heuristics so the UX stays functional.
 
-## Notes
-- Current parsing and interview evaluation are baseline heuristics for MVP speed.
-- Gemini-based LLM support is integrated with safe fallback.
+> Logging tip: the Streamlit terminal prints `[Gemini] ...` whenever the helper is called. This is useful for verifying real LLM usage during demos.
+
+---
+
+## Running Tests / Quality Checks
+
+Formal tests are still being built. For now, sanity-check the engines via the Streamlit UI:
+
+1. Onboard a sample resume + GitHub username.
+2. Visit Dashboard to verify normalized metrics and AI insights.
+3. Paste a job description in Job Match and confirm the new match score range (70–100) plus the gap clusters & graph.
+4. Run a quick Resume Griller session to ensure question generation, scoring, and persistence still work.

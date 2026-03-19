@@ -6,6 +6,7 @@ from difflib import SequenceMatcher
 from utils.llm_gemini import generate_json
 from utils.normalizers import normalize_skills
 from utils.prompts import JOB_SKILL_EXTRACTION_SYSTEM
+from core.skill_engine import normalize_score
 
 
 JD_KEYWORD_BANK = {
@@ -91,7 +92,7 @@ def build_gap_analysis(user_skill_conf: dict[str, float], jd_text: str) -> dict:
 
     if not jd_skills:
         return {
-            "match_score": 0,
+            "match_score": normalize_score(0),
             "missing_skills": [],
             "clusters": {},
             "recommendations": ["Add more detailed responsibilities to the job description."],
@@ -108,7 +109,8 @@ def build_gap_analysis(user_skill_conf: dict[str, float], jd_text: str) -> dict:
         else:
             missing.append(jd_skill)
 
-    match_score = round((matched / len(jd_skills)) * 100)
+    raw_score = (matched / len(jd_skills)) * 100
+    match_score = normalize_score(raw_score)
     clusters = _cluster_missing_skills(missing)
     recommendations = [f"Focus on {skill} to improve role readiness." for skill in missing[:5]]
 
