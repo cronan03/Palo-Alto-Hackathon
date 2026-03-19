@@ -15,6 +15,58 @@ from utils.llm_gemini import generate_json, has_gemini_api_key
 from utils.prompts import PROFILE_INSIGHTS_SYSTEM
 
 
+RESOURCE_LIBRARY: dict[str, list[tuple[str, str, str]]] = {
+    "python": [
+        ("Automate the Boring Stuff", "https://automatetheboringstuff.com/", "Al Sweigart"),
+        ("Real Python Tutorials", "https://realpython.com/", "Real Python"),
+    ],
+    "docker": [
+        ("Docker Curriculum", "https://docker-curriculum.com/", "Prakhar Srivastav"),
+        ("Play with Docker Labs", "https://labs.play-with-docker.com/", "Docker"),
+    ],
+    "kubernetes": [
+        ("Kubernetes Official Docs", "https://kubernetes.io/docs/home/", "CNCF"),
+        ("Kelsey Hightower's Kubernetes the Hard Way", "https://github.com/kelseyhightower/kubernetes-the-hard-way", "Kelsey Hightower"),
+    ],
+    "javascript": [
+        ("MDN JavaScript Guide", "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide", "Mozilla"),
+        ("You Don't Know JS Yet", "https://github.com/getify/You-Dont-Know-JS", "Kyle Simpson"),
+    ],
+    "typescript": [
+        ("TypeScript Handbook", "https://www.typescriptlang.org/docs/handbook/intro.html", "Microsoft"),
+        ("Basarat's TypeScript Deep Dive", "https://basarat.gitbook.io/typescript/", "Basarat Ali Syed"),
+    ],
+    "react": [
+        ("React Beta Docs", "https://react.dev/learn", "Meta"),
+        ("Epic React Hooks Workshop", "https://epicreact.dev/", "Kent C. Dodds"),
+    ],
+    "nodejs": [
+        ("Node.js Docs", "https://nodejs.org/docs/latest/api/", "OpenJS"),
+        ("Node.js Design Patterns", "https://www.oreilly.com/library/view/nodejs-design-patterns/9781783287314/", "Mario Casciaro"),
+    ],
+    "sql": [
+        ("Mode SQL Tutorial", "https://mode.com/sql-tutorial/", "Mode"),
+        ("SQLBolt", "https://sqlbolt.com/", "SQLBolt"),
+    ],
+    "system design": [
+        ("System Design Primer", "https://github.com/donnemartin/system-design-primer", "Donne Martin"),
+        ("Grokking Modern System Design", "https://www.educative.io/courses/grokking-modern-system-design-interview-for-engineers-managers", "Educative"),
+    ],
+    "machine learning": [
+        ("Andrew Ng Machine Learning", "https://www.coursera.org/learn/machine-learning", "Stanford / Coursera"),
+        ("fast.ai Practical Deep Learning", "https://course.fast.ai/", "fast.ai"),
+    ],
+    "aws": [
+        ("AWS Skill Builder", "https://skillbuilder.aws/", "Amazon"),
+        ("AWS re:Invent Workshops", "https://workshops.aws/", "AWS"),
+    ],
+    "ci/cd": [
+        ("GitHub Actions Docs", "https://docs.github.com/en/actions", "GitHub"),
+        ("Azure DevOps Labs", "https://www.azuredevopslabs.com/", "Microsoft"),
+    ],
+}
+
+
 st.title("Resume and GitHub Score Dashboard")
 
 profile = st.session_state.get("user_profile")
@@ -46,8 +98,8 @@ def _clean_highlights(items: list[str], limit: int = 8) -> list[str]:
     return cleaned
 
 c4, c5 = st.columns(2)
-c4.metric("Detected Experience (Years)", exp.get("years", 0))
-c5.metric("Resume Projects Found", len(projects))
+c4.metric("Detected Experience (Years)", exp.get("years", 1))
+c5.metric("Resume Projects Found", len(projects)) 
 
 skills = profile.get("skills", {})
 if skills:
@@ -67,6 +119,27 @@ if top_skills:
     st.write("Strong areas:", ", ".join([s for s, _ in top_skills]))
 if weak_skills:
     st.write("Low-confidence areas:", ", ".join([s for s, _ in weak_skills]))
+
+
+def _resource_suggestions(skills_to_fix: list[tuple[str, float]]) -> dict[str, list[tuple[str, str, str]]]:
+    suggestions: dict[str, list[tuple[str, str, str]]] = {}
+    for skill, _ in skills_to_fix:
+        key = skill.lower().strip()
+        if key in RESOURCE_LIBRARY:
+            suggestions[skill] = RESOURCE_LIBRARY[key]
+    return suggestions
+
+
+if weak_skills:
+    resources = _resource_suggestions(weak_skills)
+    st.markdown("**Recommended learning resources**")
+    if resources:
+        for skill, links in resources.items():
+            st.markdown(f"**{skill.title()}**")
+            for title, url, provider in links[:2]:
+                st.markdown(f"- [{title}]({url}) · {provider}")
+    else:
+        st.caption("Add more detail to your resume/GitHub so we can map weaknesses to well-known resources.")
 
 # Optional LLM-powered narrative insights
 if has_gemini_api_key() and skills:
