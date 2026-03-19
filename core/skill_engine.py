@@ -1,10 +1,20 @@
 from __future__ import annotations
 
 
+def normalize_score(raw_score: float, low: float = 70.0, high: float = 100.0) -> float:
+    """Scale a 0-100 raw score into the desired [low, high] range."""
+    if high <= low:
+        return round(high, 2)
+
+    clamped = max(0.0, min(100.0, raw_score))
+    scale = (high - low) / 100.0
+    return round(low + clamped * scale, 2)
+
+
 def compute_resume_score(resume_skills: list[str], resume_text: str) -> float:
     skill_coverage = min(len(resume_skills), 20) / 20 * 60
     richness = min(len(resume_text.split()), 800) / 800 * 40 if resume_text else 0
-    return round(skill_coverage + richness, 2)
+    return normalize_score(skill_coverage + richness)
 
 
 def build_unified_skill_profile(

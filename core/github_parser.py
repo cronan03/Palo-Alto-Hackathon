@@ -5,6 +5,7 @@ from collections import Counter
 import requests
 
 from utils.normalizers import normalize_skills
+from core.skill_engine import normalize_score
 
 
 GITHUB_API = "https://api.github.com"
@@ -53,10 +54,11 @@ def infer_skills(repos: list[dict]) -> dict[str, float]:
 
 def compute_github_score(repos: list[dict], github_skills: dict[str, float]) -> float:
     if not repos:
-        return 0.0
+        return normalize_score(0.0)
 
     repo_count_score = min(len(repos), 20) / 20 * 40
     stars = sum(int(r.get("stargazers_count", 0) or 0) for r in repos)
     star_score = min(stars, 50) / 50 * 15
     skill_depth_score = min(len(github_skills), 20) / 20 * 45
-    return round(repo_count_score + star_score + skill_depth_score, 2)
+    raw = repo_count_score + star_score + skill_depth_score
+    return normalize_score(raw)
