@@ -1,5 +1,7 @@
 # Skill-Bridge Career Navigator
 
+Built by **Ronan Coutinho** · [Demo Video](https://youtu.be/WMdn5NLTvNc)
+
 AI-powered career intelligence for students and early-career professionals. Upload a resume, connect GitHub, and receive a unified snapshot of demonstrated skills, job-fit guidance, and targeted interview practice.
 
 ---

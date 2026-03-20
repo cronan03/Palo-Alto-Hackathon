@@ -75,9 +75,42 @@ if not profile:
     st.stop()
 
 c1, c2, c3 = st.columns(3)
-c1.metric("Resume Score", f"{profile['resume_score']:.1f}")
-c2.metric("GitHub Score", f"{profile['github_score']:.1f}")
-c3.metric("Combined Score", f"{profile['combined_score']:.1f}")
+
+def _dial_chart(value: float, label: str):
+    # Render a donut-style pie chart with the score in the center
+    fig = px.pie(
+        names=["score", "remainder"],
+        values=[value, max(0, 100 - value)],
+        hole=0.72,
+        color_discrete_sequence=["#a855f7", "#111827"],
+    )
+    fig.update_traces(textinfo="none", hovertemplate=f"{label}: %{{value:.1f}}<extra></extra>")
+    fig.update_layout(
+        showlegend=False,
+        margin=dict(l=0, r=0, t=10, b=0),
+        annotations=[
+            dict(
+                text=f"{value:.1f}",
+                x=0.5,
+                y=0.5,
+                font=dict(size=18, color="#f8fafc"),
+                showarrow=False,
+            )
+        ],
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        height=210,
+        width=210,
+    )
+    st.plotly_chart(fig, use_container_width=False)
+    st.caption(label)
+
+with c1:
+    _dial_chart(profile["resume_score"], "Resume Score")
+with c2:
+    _dial_chart(profile["github_score"], "GitHub Score")
+with c3:
+    _dial_chart(profile["combined_score"], "Combined Score")
 
 exp = profile.get("resume_experience", {})
 projects = profile.get("resume_projects", [])
@@ -98,27 +131,28 @@ def _clean_highlights(items: list[str], limit: int = 8) -> list[str]:
     return cleaned
 
 c4, c5 = st.columns(2)
-c4.metric("Detected Experience (Years)", exp.get("years", 1))
-c5.metric("Resume Projects Found", len(projects)) 
+c4.metric("Detected Experience (Years)", "0-1")
+c5.metric("Resume Projects Found", len(projects))
 
-skills = profile.get("skills", {})
-if skills:
-    df = pd.DataFrame(
-        [{"skill": skill, "confidence": score} for skill, score in skills.items()]
-    ).sort_values("confidence", ascending=False)
-    fig = px.bar(df.head(15), x="skill", y="confidence", title="Top Skills")
-    st.plotly_chart(fig, use_container_width=True)
+with st.spinner("Preparing dashboard insights..."):
+    skills = profile.get("skills", {})
+    if skills:
+        df = pd.DataFrame(
+            [{"skill": skill, "confidence": score} for skill, score in skills.items()]
+        ).sort_values("confidence", ascending=False)
+        fig = px.bar(df.head(15), x="skill", y="confidence", title="Top Skills")
+        st.plotly_chart(fig, use_container_width=True)
 
-top_skills = sorted(skills.items(), key=lambda x: x[1], reverse=True)[:3]
-weak_skills = sorted(skills.items(), key=lambda x: x[1])[:3]
+    top_skills = sorted(skills.items(), key=lambda x: x[1], reverse=True)[:3]
+    weak_skills = sorted(skills.items(), key=lambda x: x[1])[:3]
 
-st.subheader("Insights")
+    st.subheader("Insights")
 
-# Baseline deterministic insights
-if top_skills:
-    st.write("Strong areas:", ", ".join([s for s, _ in top_skills]))
-if weak_skills:
-    st.write("Low-confidence areas:", ", ".join([s for s, _ in weak_skills]))
+    # Baseline deterministic insights
+    if top_skills:
+        st.write("Strong areas:", ", ".join([s for s, _ in top_skills]))
+    if weak_skills:
+        st.write("Low-confidence areas:", ", ".join([s for s, _ in weak_skills]))
 
 
 def _resource_suggestions(skills_to_fix: list[tuple[str, float]]) -> dict[str, list[tuple[str, str, str]]]:
@@ -130,7 +164,7 @@ def _resource_suggestions(skills_to_fix: list[tuple[str, float]]) -> dict[str, l
     return suggestions
 
 
-if weak_skills:
+if 'weak_skills' in locals() and weak_skills:
     resources = _resource_suggestions(weak_skills)
     st.markdown("**Recommended learning resources**")
     if resources:
@@ -142,7 +176,7 @@ if weak_skills:
         st.caption("Add more detail to your resume/GitHub so we can map weaknesses to well-known resources.")
 
 # Optional LLM-powered narrative insights
-if has_gemini_api_key() and skills:
+if has_gemini_api_key() and 'skills' in locals() and skills:
     with st.expander("AI-generated detailed insights", expanded=True):
         try:
             prompt = (

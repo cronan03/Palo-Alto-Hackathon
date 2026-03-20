@@ -26,8 +26,10 @@ if st.button("Analyze Match"):
     if not jd_text.strip():
         st.error("Please paste a job description first.")
     else:
-        result = build_gap_analysis(profile.get("skills", {}), jd_text)
-        save_job_match_run(profile.get("github_username", "unknown"), jd_text, result)
+        with st.spinner("Analyzing your profile vs job description..."):
+            result = build_gap_analysis(profile.get("skills", {}), jd_text)
+            save_job_match_run(profile.get("github_username", "unknown"), jd_text, result)
+
         st.metric("Match Score", f"{result['match_score']:.0f}%")
 
         st.subheader("Missing Skills")
